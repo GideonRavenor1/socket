@@ -11,4 +11,4 @@ services:
       - "${SOCKET_PORT}:${SOCKET_PORT}"
     env_file:
       .env
-    command: bash -c "sleep 10 && python main,py"
+    command: bash -c "python main,py"
