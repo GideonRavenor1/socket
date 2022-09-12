@@ -1,7 +1,7 @@
 from tornado.escape import json_decode
 from tornado.websocket import WebSocketHandler
 
-from logger import logger
+from services.logger import logger
 
 
 class BaseSocketHandler(WebSocketHandler):

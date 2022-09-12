@@ -1,4 +1,4 @@
-from services import ProjectData
+from .data import ProjectData
 from websockets.user import UserSockets
 
 

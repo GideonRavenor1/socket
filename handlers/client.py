@@ -1,4 +1,4 @@
-from state import state
+from services.state import state
 from websockets.base import BaseSocketHandler
 
 

@@ -1,6 +1,6 @@
 from tornado.escape import json_encode
 
-from state import state
+from services.state import state
 from websockets.base import BaseSocketHandler
 
 
