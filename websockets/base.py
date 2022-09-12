@@ -1,5 +1,4 @@
-import json
-
+from tornado.escape import json_decode
 from tornado.websocket import WebSocketHandler
 
 from logger import logger
@@ -18,7 +17,7 @@ class BaseSocketHandler(WebSocketHandler):
 
     def on_message(self, message):
         try:
-            self.process_message(json.loads(message))
+            self.process_message(json_decode(message))
         except Exception as exc:
             logger.exception(f'Unable to process message from socket ({id(self)}): {exc}')
             logger.debug(message)

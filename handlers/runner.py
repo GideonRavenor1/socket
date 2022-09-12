@@ -1,7 +1,7 @@
-import json
+from tornado.escape import json_encode
 
-from websockets.base import BaseSocketHandler
 from state import state
+from websockets.base import BaseSocketHandler
 
 
 class RunnerWsHandler(BaseSocketHandler):
@@ -10,14 +10,13 @@ class RunnerWsHandler(BaseSocketHandler):
         self.log('Runner connected')
 
     def process_message(self, message):
-        params = message
-        command = params.get('command', '')
+        command = message.get('command', '')
 
         if command in ['stop_task_state']:
             if not state.tasks_socket:
                 return
 
-            state.tasks_socket.write_message(json.dumps(params))
+            state.tasks_socket.write_message(json_encode(message))
 
     def on_close(self):
         self.log('Closing Runner')

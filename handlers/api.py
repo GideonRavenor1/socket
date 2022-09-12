@@ -1,5 +1,4 @@
-import json
-
+from tornado.escape import json_encode, recursive_unicode
 from tornado.web import RequestHandler
 
 from state import state
@@ -17,31 +16,30 @@ class ApiHandler(RequestHandler):
             getattr(self, method)()
 
     def _handle_results(self):
-        params = dict(self.request.arguments)
-        if 'project_id' not in params:
+        project_id = self.get_arguments('project_id')
+        if not project_id:
             return
 
-        pid = int(params["project_id"][0])
+        pid = int(project_id[0])
         if pid not in state.projects_data:
             return
 
-        state.get_from_projects_data(pid).translate_data(json.dumps(params))
+        state.get_from_projects_data(pid).translate_data(json_encode(recursive_unicode(self.request.arguments)))
 
     def _handle_notification_to_user(self):
-        params = dict(self.request.arguments)
-        user_ids = params['user_ids']
-        message = params['message']
+        user_ids = self.get_arguments('user_ids')
+        message = self.get_arguments('messages')
         for user_id in user_ids:
             state.user_sockets.send_message_to_user(int(user_id), message[0])
 
     def _handle_current_projects(self):
-        self.write(json.dumps(state.projects_data.keys()))
+        self.write(json_encode(list(state.projects_data.keys())))
 
     def _handle_is_user_connected(self):
-        user_id = self.request.arguments['user_id'][0]
+        user_id = self.get_arguments('user_id')[0]
         connected = state.user_sockets.is_registered(user_id)
         self.write(
-            json.dumps(
+            json_encode(
                 {
                     'user_id': user_id,
                     'connected': connected,

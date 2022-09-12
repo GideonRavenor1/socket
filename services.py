@@ -1,4 +1,4 @@
-import json
+from tornado.escape import json_encode
 
 
 class ProjectData:
@@ -15,19 +15,13 @@ class ProjectData:
             self.sockets.add(sock)
 
     def process_mess(self, sock, mess):
-        data = mess
-        mess_type = data['type']
+        mess_type = mess['type']
 
         if mess_type == 'reg':
-            if len(self.history) != 0:
-                sock.write_message('{"type":"history", "data":' + json.dumps(self.history) + '}')
-            else:
-                sock.write_message('{"type":"history", "data":{"gHistory": [], "gHistoryUndoed": []}}')
-            return
+            return self._execute_req_mess_type(sock)
 
-        elif mess_type == 'history':
-            self.history = data['data']
-            sock.write_message('{"type":"history", "data":' + json.dumps(self.history) + '}')
+        if mess_type == 'history':
+            self._execute_history_mess_type(sock=sock, mess=mess)
 
         self.broadcast_mess(sock, mess)
 
@@ -42,9 +36,19 @@ class ProjectData:
             self.history = ''
 
     def broadcast_mess(self, sock, mess):
-        for xsock in self.sockets:
-            if xsock != sock:
-                xsock.write_message(mess)
+        for sock_ in self.sockets:
+            if sock_ != sock:
+                sock_.write_message(mess)
 
     def clients_count(self):
         return len(self.sockets)
+
+    def _execute_req_mess_type(self, sock):
+        if len(self.history) != 0:
+            sock.write_message(json_encode({"type": "history", "data": self.history}))
+        else:
+            sock.write_message(json_encode({"type": "history", "data": {"gHistory": [], "gHistoryUndoed": []}}))
+
+    def _execute_history_mess_type(self, sock, mess):
+        self.history = mess['data']
+        sock.write_message(json_encode({"type": "history", "data": self.history}))

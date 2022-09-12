@@ -1,7 +1,7 @@
-import json
+from tornado.escape import json_encode
 
-from websockets.base import BaseSocketHandler
 from state import state
+from websockets.base import BaseSocketHandler
 
 
 class TasksWsHandler(BaseSocketHandler):
@@ -10,31 +10,18 @@ class TasksWsHandler(BaseSocketHandler):
         self.log('Tasks connected')
 
     def process_message(self, message):
-        params = message
-        command = params.get('command', '')
+        command = message.get('command', '')
 
-        if command == 'task_status_changed':
-            project = state.get_from_projects_data(params['project_id'])
-            if not project:
-                return
+        if not command:
+            return
 
-            project.broadcast_mess(self, json.dumps({
-                'type': command,
-                'pid': params['project_id'],
-                'task_id': params['task_id'],
-                'old_state': params['old_state'],
-                'new_state': params['new_state'],
-            }))
-        elif command in ['task_added', 'task_deleted']:
-            project = state.get_from_projects_data(params['project_id'])
-            if not project:
-                return
+        project = state.get_from_projects_data(message['project_id'])
+        if not project:
+            return
 
-            project.broadcast_mess(self, json.dumps({
-                'type': command,
-                'pid': params['project_id'],
-                'task_id': params['task_id']
-            }))
+        command = f'_handle_{command}'
+        if hasattr(self, command):
+            getattr(self, command)(project, command, message)
 
     def on_close(self):
         self.log('Closing Tasks')
@@ -43,3 +30,35 @@ class TasksWsHandler(BaseSocketHandler):
 
     def check_origin(self, origin):
         return True
+
+    def _handle_task_added(self, project, command, params):
+        self._broadcast_mess(
+            project=project, params={
+                'type': command,
+                'pid': params['project_id'],
+                'task_id': params['task_id']
+            }
+        )
+
+    def _handle_task_deleted(self, project, command, params):
+        self._broadcast_mess(
+            project=project, params={
+                'type': command,
+                'pid': params['project_id'],
+                'task_id': params['task_id']
+            }
+        )
+
+    def _handle_task_status_changed(self, project, command, params):
+        self._broadcast_mess(
+            project=project, params={
+                'type': command,
+                'pid': params['project_id'],
+                'task_id': params['task_id'],
+                'old_state': params['old_state'],
+                'new_state': params['new_state'],
+            }
+        )
+
+    def _broadcast_mess(self, project, params):
+        project.broadcast_mess(self, json_encode(params))

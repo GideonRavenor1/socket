@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 from config import get_settings
 
@@ -40,5 +40,6 @@ class Logger:
         return self._formatter
 
 
-logger = Logger()
-logger.setup()
+_init_logger = Logger()
+_init_logger.setup()
+logger = _init_logger.logger

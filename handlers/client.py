@@ -1,5 +1,5 @@
-from websockets.base import BaseSocketHandler
 from state import state
+from websockets.base import BaseSocketHandler
 
 
 class ClientWsHandler(BaseSocketHandler):
@@ -11,11 +11,9 @@ class ClientWsHandler(BaseSocketHandler):
         self.log('ON MESSAGE')
         self.log(data)
         pid = data['pid']
-        mess_type = data['type']
-        user_id = data['uid']
 
-        if mess_type == 'reg':
-            state.user_sockets.register(user_id, self)
+        if data['type'] == 'reg':
+            state.user_sockets.register(data['uid'], self)
 
         if pid not in state.projects_data:
             state.set_to_project_data(pid)
@@ -33,7 +31,8 @@ class ClientWsHandler(BaseSocketHandler):
 
             project.remove_socket(self)
 
-        for proj_id, project in state.projects_data.items():
+        copied_data = state.projects_data.copy()
+        for proj_id, project in copied_data.items():
             if project.clients_count() == 0:
                 state.delete_from_projects_data(proj_id)
 
